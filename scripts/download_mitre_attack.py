@@ -1,4 +1,4 @@
-rom attackcti import attack_client
+from attackcti import attack_client
 import os
 import sys
 import copy
