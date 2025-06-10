@@ -60,10 +60,23 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 
 print('[+] Splitting documents in chunks')
-chunks = text_splitter.split_documents(md_docs)
+#chunks = text_splitter.split_documents(md_docs)
+# Note:  Changing this so that only 300000 tokens or less are used, as exceeding causes error
+MAX_TOKENS = 300_000
+current_token_sum = 0
+safe_chunks = []
+
+for chunk in text_splitter.split_documents(md_docs):
+    chunk_tokens = tiktoken_len(chunk.page_content)
+    if current_token_sum + chunk_tokens > MAX_TOKENS:
+        break
+    safe_chunks.append(chunk)
+    current_token_sum += chunk_tokens
+
+print(f'[+] Using {len(safe_chunks)} chunks (total {current_token_sum} tokens) for embedding')
 
 print(f'[+] Number of documents: {len(md_docs)}')
-print(f'[+] Number of chunks: {len(chunks)}')
+#print(f'[+] Number of chunks: {len(chunks)}')
 
 embed_model = OpenAIEmbeddings(
     model="text-embedding-3-large",
@@ -71,7 +84,8 @@ embed_model = OpenAIEmbeddings(
 )
 
 print("[+] Load embeddings into Chroma and save it to disk")
-db = Chroma.from_documents(chunks, embed_model, collection_name="groups_collection", persist_directory="./chroma_db")
+db = Chroma.from_documents(safe_chunks, embed_model, collection_name="groups_collection", persist_directory="./chroma_db")
+#db = Chroma.from_documents(chunks, embed_model, collection_name="groups_collection", persist_directory="./chroma_db")
 
 ## An example question
 """
