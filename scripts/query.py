@@ -16,10 +16,30 @@ current_directory = os.path.dirname(__file__)
 chroma_db = os.path.join(current_directory, "./chroma_db")
 persistent_client = chromadb.PersistentClient(path=chroma_db)
 
+# set the model and temperature
+llm = OpenAI(
+    model="gpt-4o",
+    temperature=0.1
+)
+
+
 embed_model = OpenAIEmbeddings(
     model="text-embedding-3-large",
     dimensions=768
 )
+
+def print_llm_info(llm, prefix=""):
+    print(prefix + "Provider class:", llm.__class__.__name__)
+    print(prefix + "Provider module:", llm.__class__.__module__)
+
+    model_name = getattr(llm, "model_name", None) or getattr(llm, "model", None)
+    print(prefix + "Model name:", model_name)
+
+    temperature = getattr(llm, "temperature", None)
+    print(prefix + "Temperature:", temperature)
+
+# Print the model and temperature
+print_llm_info(llm, "[DEBUG] ")
 
 db = Chroma(
     client=persistent_client,
@@ -44,7 +64,10 @@ for doc in relevant_docs1:
 
 # Use the RetrievalQA chain to answer query1 automatically
 qa_chain = RetrievalQA.from_chain_type(
-    llm=OpenAI(temperature=0),
+    # Commented out the default model and temperature
+    # llm=OpenAI(temperature=0),
+
+    llm=llm,
     chain_type="stuff",
     retriever=retriever,
 )
@@ -85,7 +108,10 @@ custom_prompt = PromptTemplate(
 
 # Create the stuff chain using the recommended constructor
 doc_chain = create_stuff_documents_chain(
-    llm=OpenAI(temperature=0),
+    # Commented out the default model and temperature
+    # llm=OpenAI(temperature=0),
+
+    llm=llm,
     prompt=custom_prompt,
 )
 
