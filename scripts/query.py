@@ -1,7 +1,7 @@
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_openai import OpenAIEmbeddings
-from langchain_openai import OpenAI
+from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
 from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
@@ -17,15 +17,18 @@ chroma_db = os.path.join(current_directory, "./chroma_db")
 persistent_client = chromadb.PersistentClient(path=chroma_db)
 
 # set the model and temperature
-llm = OpenAI(
+llm = ChatOpenAI(
     model="gpt-4o",
-    temperature=0.1
+    #temperature=0.1
+    temperature=0
 )
 
 
 embed_model = OpenAIEmbeddings(
     model="text-embedding-3-large",
-    dimensions=768
+    # dimensions=768
+    # Full embedding dimensions (3072) for higher quality embeddings
+    dimensions=3072
 )
 
 def print_llm_info(llm, prefix=""):
@@ -52,13 +55,16 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Create a retriever from the vector store
-retriever = db.as_retriever(search_kwargs={"k":5})
+retriever = db.as_retriever(search_kwargs={"k":10})
 
 # query 1:  Retrieve and answer a general question
-query1 = "What threat actors sent text messages to their targets?"
+query1 = "What threat actor group sends text messages to their victims?"
+#query1 = "What threat actors sent text messages to their targets?"
+#query1 = "What threat actors sent SMS messages to their targets?"
 
 print("[+] Getting relevant documents for query 1")
 relevant_docs1 = retriever.invoke(query1)
+print(f"[DEBUG] Number of documents retrieved: {len(relevant_docs1)}")
 for doc in relevant_docs1:
     print(doc.page_content)
 
@@ -108,9 +114,6 @@ custom_prompt = PromptTemplate(
 
 # Create the stuff chain using the recommended constructor
 doc_chain = create_stuff_documents_chain(
-    # Commented out the default model and temperature
-    # llm=OpenAI(temperature=0),
-
     llm=llm,
     prompt=custom_prompt,
 )
