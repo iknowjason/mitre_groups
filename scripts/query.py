@@ -17,11 +17,13 @@ chroma_db = os.path.join(current_directory, "./chroma_db")
 persistent_client = chromadb.PersistentClient(path=chroma_db)
 
 # set the model and temperature
+# set the model and temperature
 llm = ChatOpenAI(
-    model="gpt-4o",
+    model="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     #temperature=0.1
     temperature=0
 )
+
 
 
 embed_model = OpenAIEmbeddings(
