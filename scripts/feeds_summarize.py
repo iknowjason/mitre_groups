@@ -2,8 +2,10 @@ import logging
 import sys
 from datetime import datetime
 from llama_index.core import SummaryIndex
-from llama_index.readers.web import SimpleWebPageReader
+from llama_index.core import Document
+from bs4 import BeautifulSoup
 import feedparser
+import requests
 
 # Configure logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -22,8 +24,13 @@ def llm_summarize(url):
         advisory_id = url.split('/')[-1]
         file_name = f"{advisory_id}.txt"
 
-        # Load webpage content
-        documents = SimpleWebPageReader(html_to_text=True).load_data([url])
+        # Load webpage content with User-Agent to bypass Akamai 403
+        ua_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, headers=ua_headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        page_text = soup.get_text(separator="\n", strip=True)
+        documents = [Document(text=page_text)]
 
         # Generate summary using LlamaIndex
         index = SummaryIndex.from_documents(documents)
@@ -48,7 +55,9 @@ def llm_summarize(url):
         print(f"[!] Error processing {url}: {str(e)}")
 
 cisa_all_alerts = "https://www.cisa.gov/cybersecurity-advisories/all.xml"
-feed = feedparser.parse(cisa_all_alerts)
+ua_headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+response = requests.get(cisa_all_alerts, headers=ua_headers)
+feed = feedparser.parse(response.text)
 
 for entry in feed.entries:
     print("Entry Title:", entry.title)
