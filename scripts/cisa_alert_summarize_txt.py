@@ -3,7 +3,15 @@ import sys
 import requests
 from llama_index.core import SummaryIndex
 from llama_index.core import Document
+from llama_index.core import Settings
+from llama_index.llms.openai import OpenAI
 import os
+
+# Pin the LLM to an allowed model. LlamaIndex's default LLM is gpt-3.5-turbo,
+# which is deprecated and returns HTTP 404 on the SANS LiteLLM proxy. The API key
+# and base URL still come from the environment (OPENAI_API_KEY / OPENAI_API_BASE);
+# only the model needs to change. gpt-4o is on the SANS allow-list.
+Settings.llm = OpenAI(model="gpt-4o")
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
